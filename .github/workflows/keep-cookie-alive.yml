@@ -4,7 +4,17 @@ on:
   schedule:
     # 每隔一定时间执行一次（默认每30分钟），可根据需要调整频率
     - cron: '*/30 * * * *'
-  workflow_dispatch: # 允许手动触发
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: false
+        default: 'warning'
+        type: choice
+        options:
+        - info
+        - warning
+        - debug
 
 jobs:
   keep-session-active:
@@ -53,7 +63,7 @@ jobs:
           // 检查是否提供了API端点
           if (!siteConfig.endpoint) {
             console.error('No API endpoint provided for this site');
-            process.exit(1);
+            process.exit(0); // 正常退出而不是错误退出
           }
           
           // 构建cookie文件名
@@ -119,7 +129,7 @@ jobs:
           EOF
           
       - name: Execute Keep Alive Request for Site 1
-        if: matrix.site.name == 'site1' && secrets.SITE1_ENDPOINT != ''
+        if: matrix.site.name == 'site1'
         env:
           SITE_NAME: site1
           API_ENDPOINT: ${{ secrets.SITE1_ENDPOINT }}
@@ -131,7 +141,7 @@ jobs:
           node keep-alive.js
           
       - name: Execute Keep Alive Request for Site 2
-        if: matrix.site.name == 'site2' && secrets.SITE2_ENDPOINT != ''
+        if: matrix.site.name == 'site2'
         env:
           SITE_NAME: site2
           API_ENDPOINT: ${{ secrets.SITE2_ENDPOINT }}
@@ -143,7 +153,7 @@ jobs:
           node keep-alive.js
           
       - name: Execute Keep Alive Request for Site 3
-        if: matrix.site.name == 'site3' && secrets.SITE3_ENDPOINT != ''
+        if: matrix.site.name == 'site3'
         env:
           SITE_NAME: site3
           API_ENDPOINT: ${{ secrets.SITE3_ENDPOINT }}
@@ -155,7 +165,7 @@ jobs:
           node keep-alive.js
           
       - name: Execute Keep Alive Request for Site 4
-        if: matrix.site.name == 'site4' && secrets.SITE4_ENDPOINT != ''
+        if: matrix.site.name == 'site4'
         env:
           SITE_NAME: site4
           API_ENDPOINT: ${{ secrets.SITE4_ENDPOINT }}
@@ -167,7 +177,7 @@ jobs:
           node keep-alive.js
           
       - name: Execute Keep Alive Request for Site 5
-        if: matrix.site.name == 'site5' && secrets.SITE5_ENDPOINT != ''
+        if: matrix.site.name == 'site5'
         env:
           SITE_NAME: site5
           API_ENDPOINT: ${{ secrets.SITE5_ENDPOINT }}
@@ -179,7 +189,7 @@ jobs:
           node keep-alive.js
           
       - name: Execute Keep Alive Request for Site 6
-        if: matrix.site.name == 'site6' && secrets.SITE6_ENDPOINT != ''
+        if: matrix.site.name == 'site6'
         env:
           SITE_NAME: site6
           API_ENDPOINT: ${{ secrets.SITE6_ENDPOINT }}
@@ -191,7 +201,7 @@ jobs:
           node keep-alive.js
           
       - name: Execute Keep Alive Request for Site 7
-        if: matrix.site.name == 'site7' && secrets.SITE7_ENDPOINT != ''
+        if: matrix.site.name == 'site7'
         env:
           SITE_NAME: site7
           API_ENDPOINT: ${{ secrets.SITE7_ENDPOINT }}
@@ -203,7 +213,7 @@ jobs:
           node keep-alive.js
           
       - name: Execute Keep Alive Request for Site 8
-        if: matrix.site.name == 'site8' && secrets.SITE8_ENDPOINT != ''
+        if: matrix.site.name == 'site8'
         env:
           SITE_NAME: site8
           API_ENDPOINT: ${{ secrets.SITE8_ENDPOINT }}
@@ -215,7 +225,7 @@ jobs:
           node keep-alive.js
           
       - name: Execute Keep Alive Request for Site 9
-        if: matrix.site.name == 'site9' && secrets.SITE9_ENDPOINT != ''
+        if: matrix.site.name == 'site9'
         env:
           SITE_NAME: site9
           API_ENDPOINT: ${{ secrets.SITE9_ENDPOINT }}
@@ -227,7 +237,7 @@ jobs:
           node keep-alive.js
           
       - name: Execute Keep Alive Request for Site 10
-        if: matrix.site.name == 'site10' && secrets.SITE10_ENDPOINT != ''
+        if: matrix.site.name == 'site10'
         env:
           SITE_NAME: site10
           API_ENDPOINT: ${{ secrets.SITE10_ENDPOINT }}
