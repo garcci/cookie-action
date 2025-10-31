@@ -249,7 +249,7 @@ jobs:
           node keep-alive.js
           
       - name: Save Cookies For Next Run (${{ matrix.site.name }})
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
           name: ${{ matrix.site.name }}-session-cookies
@@ -257,7 +257,7 @@ jobs:
           if-no-files-found: ignore
           
       - name: Save Response For Analysis (${{ matrix.site.name }})
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
           name: ${{ matrix.site.name }}-last-response
