@@ -1,0 +1,255 @@
+name: Keep Multiple Cookies Alive
+
+on:
+  schedule:
+    # 每隔一定时间执行一次（默认每30分钟），可根据需要调整频率
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  keep-session-active:
+    runs-on: ubuntu-latest
+    strategy:
+      # 矩阵策略，为每个站点创建一个独立的任务
+      matrix:
+        site: 
+          - { name: "site1" }
+          - { name: "site2" }
+          - { name: "site3" }
+          - { name: "site4" }
+          - { name: "site5" }
+          - { name: "site6" }
+          - { name: "site7" }
+          - { name: "site8" }
+          - { name: "site9" }
+          - { name: "site10" }
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          
+      - name: Create Multi-site Keep Alive Script
+        run: |
+          cat > keep-alive.js << 'EOF'
+          const https = require('https');
+          const fs = require('fs');
+          const url = require('url');
+          
+          // 从环境变量获取站点配置
+          const siteConfig = {
+            name: process.env.SITE_NAME,
+            endpoint: process.env.API_ENDPOINT,
+            method: process.env.REQUEST_METHOD || 'GET',
+            headers: process.env.CUSTOM_HEADERS ? JSON.parse(process.env.CUSTOM_HEADERS) : {
+              'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
+            },
+            data: process.env.POST_DATA
+          };
+          
+          // 检查是否提供了API端点
+          if (!siteConfig.endpoint) {
+            console.error('No API endpoint provided for this site');
+            process.exit(1);
+          }
+          
+          // 构建cookie文件名
+          const cookieFileName = `${siteConfig.name}-cookies.txt`;
+          const responseFileName = `${siteConfig.name}-last-response.json`;
+          
+          // 如果存在保存的cookie文件，则读取cookie
+          if (fs.existsSync(cookieFileName)) {
+            const cookies = fs.readFileSync(cookieFileName, 'utf8');
+            siteConfig.headers['Cookie'] = cookies;
+            console.log(`Loaded cookies from ${cookieFileName}`);
+          } else if (process.env.INITIAL_COOKIES) {
+            // 如果没有保存的cookie文件但提供了初始cookie，则使用初始cookie
+            siteConfig.headers['Cookie'] = process.env.INITIAL_COOKIES;
+            console.log('Using initial cookies provided via secrets');
+          }
+          
+          console.log(`Making ${siteConfig.method} request to ${siteConfig.endpoint} at ${new Date().toISOString()}`);
+          
+          // 解析URL以获取主机名和路径
+          const parsedUrl = url.parse(siteConfig.endpoint);
+          
+          const options = {
+            hostname: parsedUrl.hostname,
+            port: parsedUrl.protocol === 'https:' ? 443 : 80,
+            path: parsedUrl.path || '/',
+            method: siteConfig.method,
+            headers: siteConfig.headers
+          };
+          
+          const req = https.request(options, (res) => {
+            console.log(`${siteConfig.name}: STATUS: ${res.statusCode}`);
+            
+            // 保存Set-Cookie头到文件
+            if (res.headers['set-cookie']) {
+              const cookieString = res.headers['set-cookie'].join('; ');
+              fs.writeFileSync(cookieFileName, cookieString);
+              console.log(`${siteConfig.name}: Saved cookies to ${cookieFileName}`);
+            }
+            
+            let data = '';
+            res.on('data', (chunk) => {
+              data += chunk;
+            });
+            
+            res.on('end', () => {
+              console.log(`${siteConfig.name}: Request completed successfully`);
+              // 保存响应内容
+              fs.writeFileSync(responseFileName, data);
+            });
+          });
+          
+          req.on('error', (e) => {
+            console.error(`${siteConfig.name}: Problem with request: ${e.message}`);
+          });
+          
+          // 如果是POST请求，可以发送数据
+          if (siteConfig.method === 'POST' && siteConfig.data) {
+            req.write(siteConfig.data);
+          }
+          
+          req.end();
+          EOF
+          
+      - name: Execute Keep Alive Request for Site 1
+        if: matrix.site.name == 'site1' && secrets.SITE1_ENDPOINT != ''
+        env:
+          SITE_NAME: site1
+          API_ENDPOINT: ${{ secrets.SITE1_ENDPOINT }}
+          REQUEST_METHOD: ${{ secrets.SITE1_METHOD || 'GET' }}
+          CUSTOM_HEADERS: ${{ secrets.SITE1_HEADERS }}
+          POST_DATA: ${{ secrets.SITE1_DATA }}
+          INITIAL_COOKIES: ${{ secrets.SITE1_COOKIES }}
+        run: |
+          node keep-alive.js
+          
+      - name: Execute Keep Alive Request for Site 2
+        if: matrix.site.name == 'site2' && secrets.SITE2_ENDPOINT != ''
+        env:
+          SITE_NAME: site2
+          API_ENDPOINT: ${{ secrets.SITE2_ENDPOINT }}
+          REQUEST_METHOD: ${{ secrets.SITE2_METHOD || 'GET' }}
+          CUSTOM_HEADERS: ${{ secrets.SITE2_HEADERS }}
+          POST_DATA: ${{ secrets.SITE2_DATA }}
+          INITIAL_COOKIES: ${{ secrets.SITE2_COOKIES }}
+        run: |
+          node keep-alive.js
+          
+      - name: Execute Keep Alive Request for Site 3
+        if: matrix.site.name == 'site3' && secrets.SITE3_ENDPOINT != ''
+        env:
+          SITE_NAME: site3
+          API_ENDPOINT: ${{ secrets.SITE3_ENDPOINT }}
+          REQUEST_METHOD: ${{ secrets.SITE3_METHOD || 'GET' }}
+          CUSTOM_HEADERS: ${{ secrets.SITE3_HEADERS }}
+          POST_DATA: ${{ secrets.SITE3_DATA }}
+          INITIAL_COOKIES: ${{ secrets.SITE3_COOKIES }}
+        run: |
+          node keep-alive.js
+          
+      - name: Execute Keep Alive Request for Site 4
+        if: matrix.site.name == 'site4' && secrets.SITE4_ENDPOINT != ''
+        env:
+          SITE_NAME: site4
+          API_ENDPOINT: ${{ secrets.SITE4_ENDPOINT }}
+          REQUEST_METHOD: ${{ secrets.SITE4_METHOD || 'GET' }}
+          CUSTOM_HEADERS: ${{ secrets.SITE4_HEADERS }}
+          POST_DATA: ${{ secrets.SITE4_DATA }}
+          INITIAL_COOKIES: ${{ secrets.SITE4_COOKIES }}
+        run: |
+          node keep-alive.js
+          
+      - name: Execute Keep Alive Request for Site 5
+        if: matrix.site.name == 'site5' && secrets.SITE5_ENDPOINT != ''
+        env:
+          SITE_NAME: site5
+          API_ENDPOINT: ${{ secrets.SITE5_ENDPOINT }}
+          REQUEST_METHOD: ${{ secrets.SITE5_METHOD || 'GET' }}
+          CUSTOM_HEADERS: ${{ secrets.SITE5_HEADERS }}
+          POST_DATA: ${{ secrets.SITE5_DATA }}
+          INITIAL_COOKIES: ${{ secrets.SITE5_COOKIES }}
+        run: |
+          node keep-alive.js
+          
+      - name: Execute Keep Alive Request for Site 6
+        if: matrix.site.name == 'site6' && secrets.SITE6_ENDPOINT != ''
+        env:
+          SITE_NAME: site6
+          API_ENDPOINT: ${{ secrets.SITE6_ENDPOINT }}
+          REQUEST_METHOD: ${{ secrets.SITE6_METHOD || 'GET' }}
+          CUSTOM_HEADERS: ${{ secrets.SITE6_HEADERS }}
+          POST_DATA: ${{ secrets.SITE6_DATA }}
+          INITIAL_COOKIES: ${{ secrets.SITE6_COOKIES }}
+        run: |
+          node keep-alive.js
+          
+      - name: Execute Keep Alive Request for Site 7
+        if: matrix.site.name == 'site7' && secrets.SITE7_ENDPOINT != ''
+        env:
+          SITE_NAME: site7
+          API_ENDPOINT: ${{ secrets.SITE7_ENDPOINT }}
+          REQUEST_METHOD: ${{ secrets.SITE7_METHOD || 'GET' }}
+          CUSTOM_HEADERS: ${{ secrets.SITE7_HEADERS }}
+          POST_DATA: ${{ secrets.SITE7_DATA }}
+          INITIAL_COOKIES: ${{ secrets.SITE7_COOKIES }}
+        run: |
+          node keep-alive.js
+          
+      - name: Execute Keep Alive Request for Site 8
+        if: matrix.site.name == 'site8' && secrets.SITE8_ENDPOINT != ''
+        env:
+          SITE_NAME: site8
+          API_ENDPOINT: ${{ secrets.SITE8_ENDPOINT }}
+          REQUEST_METHOD: ${{ secrets.SITE8_METHOD || 'GET' }}
+          CUSTOM_HEADERS: ${{ secrets.SITE8_HEADERS }}
+          POST_DATA: ${{ secrets.SITE8_DATA }}
+          INITIAL_COOKIES: ${{ secrets.SITE8_COOKIES }}
+        run: |
+          node keep-alive.js
+          
+      - name: Execute Keep Alive Request for Site 9
+        if: matrix.site.name == 'site9' && secrets.SITE9_ENDPOINT != ''
+        env:
+          SITE_NAME: site9
+          API_ENDPOINT: ${{ secrets.SITE9_ENDPOINT }}
+          REQUEST_METHOD: ${{ secrets.SITE9_METHOD || 'GET' }}
+          CUSTOM_HEADERS: ${{ secrets.SITE9_HEADERS }}
+          POST_DATA: ${{ secrets.SITE9_DATA }}
+          INITIAL_COOKIES: ${{ secrets.SITE9_COOKIES }}
+        run: |
+          node keep-alive.js
+          
+      - name: Execute Keep Alive Request for Site 10
+        if: matrix.site.name == 'site10' && secrets.SITE10_ENDPOINT != ''
+        env:
+          SITE_NAME: site10
+          API_ENDPOINT: ${{ secrets.SITE10_ENDPOINT }}
+          REQUEST_METHOD: ${{ secrets.SITE10_METHOD || 'GET' }}
+          CUSTOM_HEADERS: ${{ secrets.SITE10_HEADERS }}
+          POST_DATA: ${{ secrets.SITE10_DATA }}
+          INITIAL_COOKIES: ${{ secrets.SITE10_COOKIES }}
+        run: |
+          node keep-alive.js
+          
+      - name: Save Cookies For Next Run (${{ matrix.site.name }})
+        uses: actions/upload-artifact@v3
+        if: success() || failure()
+        with:
+          name: ${{ matrix.site.name }}-session-cookies
+          path: ${{ matrix.site.name }}-cookies.txt
+          if-no-files-found: ignore
+          
+      - name: Save Response For Analysis (${{ matrix.site.name }})
+        uses: actions/upload-artifact@v3
+        if: success() || failure()
+        with:
+          name: ${{ matrix.site.name }}-last-response
+          path: ${{ matrix.site.name }}-last-response.json
+          if-no-files-found: ignore
