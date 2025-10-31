@@ -116,6 +116,23 @@ Name: SITE6_COOKIES
 Value: sessionid=abc123xyz; csrftoken=def456uvw; user_pref=dark_mode
 ```
 
+## Secrets 配置详解
+
+每个站点支持以下 secrets 配置：
+
+| Secret 名称 | 是否必需 | 说明 |
+|------------|---------|------|
+| SITE*_ENDPOINT | 是 | 目标网站的 URL，例如: https://api.example.com |
+| SITE*_METHOD | 否 | HTTP 请求方法，默认为 GET |
+| SITE*_HEADERS | 否 | 自定义请求头，必须是有效的 JSON 格式 |
+| SITE*_DATA | 否 | POST/PUT 请求的数据 |
+| SITE*_COOKIES | 否 | 初始 Cookie 值，用于会话保持 |
+
+**注意**: 
+- `SITE*` 中的 `*` 代表站点编号，从 1 到 10
+- `SITE_NAME` 是内部使用的变量，不需要手动配置
+- 至少需要配置 `SITE*_ENDPOINT` 才能启用对应站点的任务
+
 ## 重要注意事项
 
 1. **安全性**: 不要在代码中硬编码敏感信息，始终使用 secrets
@@ -165,3 +182,6 @@ A: 工作流程如下：
 3. 发送 HTTP 请求到目标站点
 4. 如果响应中包含 Set-Cookie 头，则将新 Cookie 保存到文件中
 5. 下次执行时使用更新后的 Cookie
+
+### Q: SITE_NAME 是什么？需要配置吗？
+A: `SITE_NAME` 是内部变量，用于标识不同的站点任务（如 site1、site2 等）。它在工作流内部自动设置，不需要也不应该在 secrets 中手动配置。
