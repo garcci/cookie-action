@@ -50,13 +50,24 @@ jobs:
           const url = require('url');
           
           // 从环境变量获取站点配置
+          let customHeaders = {
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
+          };
+          
+          // 安全地解析自定义头部
+          if (process.env.CUSTOM_HEADERS) {
+            try {
+              customHeaders = JSON.parse(process.env.CUSTOM_HEADERS);
+            } catch (e) {
+              console.error('Failed to parse CUSTOM_HEADERS as JSON, using default headers');
+            }
+          }
+          
           const siteConfig = {
             name: process.env.SITE_NAME,
             endpoint: process.env.API_ENDPOINT,
             method: process.env.REQUEST_METHOD || 'GET',
-            headers: process.env.CUSTOM_HEADERS ? JSON.parse(process.env.CUSTOM_HEADERS) : {
-              'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
-            },
+            headers: customHeaders,
             data: process.env.POST_DATA
           };
           
@@ -84,7 +95,13 @@ jobs:
           console.log(`Making ${siteConfig.method} request to ${siteConfig.endpoint} at ${new Date().toISOString()}`);
           
           // 解析URL以获取主机名和路径 (使用 WHATWG URL API 替代已弃用的 url.parse)
-          const parsedUrl = new URL(siteConfig.endpoint);
+          let parsedUrl;
+          try {
+            parsedUrl = new URL(siteConfig.endpoint);
+          } catch (e) {
+            console.error(`Invalid URL: ${siteConfig.endpoint}`);
+            process.exit(1);
+          }
           
           const options = {
             hostname: parsedUrl.hostname,
