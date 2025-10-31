@@ -83,13 +83,13 @@ jobs:
           
           console.log(`Making ${siteConfig.method} request to ${siteConfig.endpoint} at ${new Date().toISOString()}`);
           
-          // 解析URL以获取主机名和路径
-          const parsedUrl = url.parse(siteConfig.endpoint);
+          // 解析URL以获取主机名和路径 (使用 WHATWG URL API 替代已弃用的 url.parse)
+          const parsedUrl = new URL(siteConfig.endpoint);
           
           const options = {
             hostname: parsedUrl.hostname,
-            port: parsedUrl.protocol === 'https:' ? 443 : 80,
-            path: parsedUrl.path || '/',
+            port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
+            path: parsedUrl.pathname + parsedUrl.search,
             method: siteConfig.method,
             headers: siteConfig.headers
           };
