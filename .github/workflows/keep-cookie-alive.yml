@@ -5,16 +5,6 @@ on:
     # 每隔一定时间执行一次（默认每30分钟），可根据需要调整频率
     - cron: '*/30 * * * *'
   workflow_dispatch:
-    inputs:
-      logLevel:
-        description: 'Log level'
-        required: false
-        default: 'warning'
-        type: choice
-        options:
-        - info
-        - warning
-        - debug
 
 jobs:
   keep-session-active:
