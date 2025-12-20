@@ -64,14 +64,13 @@ Value: curl -X GET "https://example.com/protected-page" -H "User-Agent: Mozilla/
 
 **注意**: 
 - `SITE*` 中的 `*` 代表站点编号，从 1 到 10
-- `SITE_NAME` 是内部使用的变量，不需要手动配置
 - 至少需要配置一个 `SITE*_CURL` 才能启用对应站点的任务
 
 ## 重要注意事项
 
 1. **安全性**: 不要在代码中硬编码敏感信息，始终使用 secrets
 2. **cURL 命令**: 确保您的 cURL 命令是有效的并且可以正常执行
-3. **Cookie 处理**: 系统会自动处理 cookie 的保存和加载，不需要在命令中添加 `-c` 或 `--cookie-jar` 参数
+3. **Cookie 处理**: 系统会自动处理 cookie 的保存和加载
 4. **令牌轮换**: 定期更新 secrets 中的令牌和密钥
 5. **测试**: 在生产环境中使用前，先测试你的配置
 
@@ -108,8 +107,9 @@ A: 只需配置基本的 cURL 命令，例如：`curl -X GET "https://example.co
 ### Q: Cookie 续期是如何工作的？
 A: 工作流程如下：
 1. 执行您在 secrets 中提供的 cURL 命令
-2. 系统自动添加 `-c` 参数将响应中的 Set-Cookie 头保存到文件中
-3. 下次执行时，您可以使用 `-b` 参数加载这些 cookie
+2. Node.js 脚本解析命令并提取参数
+3. 系统自动保存响应中的 Set-Cookie 头到文件中
+4. 下次执行时，自动加载这些 cookie
 
-### Q: SITE_NAME 是什么？需要配置吗？
-A: `SITE_NAME` 是内部变量，用于标识不同的站点任务（如 site1、site2 等）。它在工作流内部自动设置，不需要也不应该在 secrets 中手动配置。
+### Q: 为什么使用 Node.js 而不是直接执行 cURL？
+A: 使用 Node.js 提供了更好的错误处理、更精确的控制和更丰富的调试信息。同时，它还能更好地解析和处理 cURL 命令中的各种参数。
