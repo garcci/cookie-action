@@ -37,233 +37,190 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
-          
-      - name: Create Multi-site Keep Alive Script
+      - name: Setup cURL
         run: |
-          cat > keep-alive.js << 'EOF'
-          const https = require('https');
-          const fs = require('fs');
-          const url = require('url');
+          echo "cURL version:"
+          curl --version
           
-          // 从环境变量获取站点配置
-          let customHeaders = {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
-          };
-          
-          // 安全地解析自定义头部
-          if (process.env.CUSTOM_HEADERS) {
-            try {
-              customHeaders = JSON.parse(process.env.CUSTOM_HEADERS);
-            } catch (e) {
-              console.error('Failed to parse CUSTOM_HEADERS as JSON, using default headers');
-            }
-          }
-          
-          const siteConfig = {
-            name: process.env.SITE_NAME,
-            endpoint: process.env.API_ENDPOINT,
-            method: process.env.REQUEST_METHOD || 'GET',
-            headers: customHeaders,
-            data: process.env.POST_DATA
-          };
-          
-          // 检查是否提供了API端点
-          if (!siteConfig.endpoint) {
-            console.error('No API endpoint provided for this site');
-            process.exit(0); // 正常退出而不是错误退出
-          }
-          
-          // 构建cookie文件名
-          const cookieFileName = `${siteConfig.name}-cookies.txt`;
-          const responseFileName = `${siteConfig.name}-last-response.json`;
-          
-          // 如果存在保存的cookie文件，则读取cookie
-          if (fs.existsSync(cookieFileName)) {
-            const cookies = fs.readFileSync(cookieFileName, 'utf8');
-            siteConfig.headers['Cookie'] = cookies;
-            console.log(`Loaded cookies from ${cookieFileName}`);
-          } else if (process.env.INITIAL_COOKIES) {
-            // 如果没有保存的cookie文件但提供了初始cookie，则使用初始cookie
-            siteConfig.headers['Cookie'] = process.env.INITIAL_COOKIES;
-            console.log('Using initial cookies provided via secrets');
-          }
-          
-          console.log(`Making ${siteConfig.method} request to ${siteConfig.endpoint} at ${new Date().toISOString()}`);
-          
-          // 解析URL以获取主机名和路径 (使用 WHATWG URL API 替代已弃用的 url.parse)
-          let parsedUrl;
-          try {
-            parsedUrl = new URL(siteConfig.endpoint);
-          } catch (e) {
-            console.error(`Invalid URL: ${siteConfig.endpoint}`);
-            process.exit(1);
-          }
-          
-          const options = {
-            hostname: parsedUrl.hostname,
-            port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
-            path: parsedUrl.pathname + parsedUrl.search,
-            method: siteConfig.method,
-            headers: siteConfig.headers
-          };
-          
-          const req = https.request(options, (res) => {
-            console.log(`${siteConfig.name}: STATUS: ${res.statusCode}`);
-            
-            // 保存Set-Cookie头到文件
-            if (res.headers['set-cookie']) {
-              const cookieString = res.headers['set-cookie'].join('; ');
-              fs.writeFileSync(cookieFileName, cookieString);
-              console.log(`${siteConfig.name}: Saved cookies to ${cookieFileName}`);
-            }
-            
-            let data = '';
-            res.on('data', (chunk) => {
-              data += chunk;
-            });
-            
-            res.on('end', () => {
-              console.log(`${siteConfig.name}: Request completed successfully`);
-              // 保存响应内容
-              fs.writeFileSync(responseFileName, data);
-            });
-          });
-          
-          req.on('error', (e) => {
-            console.error(`${siteConfig.name}: Problem with request: ${e.message}`);
-          });
-          
-          // 如果是POST请求，可以发送数据
-          if (siteConfig.method === 'POST' && siteConfig.data) {
-            req.write(siteConfig.data);
-          }
-          
-          req.end();
-          EOF
-          
-      - name: Execute Keep Alive Request for Site 1
-        if: matrix.site.name == 'site1'
+      - name: Execute Custom cURL for Site 1
+        if: matrix.site.name == 'site1' && secrets.SITE1_CURL != ''
         env:
+          CUSTOM_CURL: ${{ secrets.SITE1_CURL }}
           SITE_NAME: site1
-          API_ENDPOINT: ${{ secrets.SITE1_ENDPOINT }}
-          REQUEST_METHOD: ${{ secrets.SITE1_METHOD || 'GET' }}
-          CUSTOM_HEADERS: ${{ secrets.SITE1_HEADERS }}
-          POST_DATA: ${{ secrets.SITE1_DATA }}
-          INITIAL_COOKIES: ${{ secrets.SITE1_COOKIES }}
         run: |
-          node keep-alive.js
+          echo "Executing custom cURL command for ${SITE_NAME}"
+          echo "Command: ${CUSTOM_CURL}"
           
-      - name: Execute Keep Alive Request for Site 2
-        if: matrix.site.name == 'site2'
+          # 设置cookie文件和响应文件
+          COOKIE_FILE="${SITE_NAME}-cookies.txt"
+          RESPONSE_FILE="${SITE_NAME}-last-response.json"
+          
+          # 执行cURL命令，添加cookie处理选项
+          eval "${CUSTOM_CURL}" -c "${COOKIE_FILE}" > "${RESPONSE_FILE}"
+          
+          echo "${SITE_NAME}: Request completed successfully"
+          
+      - name: Execute Custom cURL for Site 2
+        if: matrix.site.name == 'site2' && secrets.SITE2_CURL != ''
         env:
+          CUSTOM_CURL: ${{ secrets.SITE2_CURL }}
           SITE_NAME: site2
-          API_ENDPOINT: ${{ secrets.SITE2_ENDPOINT }}
-          REQUEST_METHOD: ${{ secrets.SITE2_METHOD || 'GET' }}
-          CUSTOM_HEADERS: ${{ secrets.SITE2_HEADERS }}
-          POST_DATA: ${{ secrets.SITE2_DATA }}
-          INITIAL_COOKIES: ${{ secrets.SITE2_COOKIES }}
         run: |
-          node keep-alive.js
+          echo "Executing custom cURL command for ${SITE_NAME}"
+          echo "Command: ${CUSTOM_CURL}"
           
-      - name: Execute Keep Alive Request for Site 3
-        if: matrix.site.name == 'site3'
+          # 设置cookie文件和响应文件
+          COOKIE_FILE="${SITE_NAME}-cookies.txt"
+          RESPONSE_FILE="${SITE_NAME}-last-response.json"
+          
+          # 执行cURL命令，添加cookie处理选项
+          eval "${CUSTOM_CURL}" -c "${COOKIE_FILE}" > "${RESPONSE_FILE}"
+          
+          echo "${SITE_NAME}: Request completed successfully"
+          
+      - name: Execute Custom cURL for Site 3
+        if: matrix.site.name == 'site3' && secrets.SITE3_CURL != ''
         env:
+          CUSTOM_CURL: ${{ secrets.SITE3_CURL }}
           SITE_NAME: site3
-          API_ENDPOINT: ${{ secrets.SITE3_ENDPOINT }}
-          REQUEST_METHOD: ${{ secrets.SITE3_METHOD || 'GET' }}
-          CUSTOM_HEADERS: ${{ secrets.SITE3_HEADERS }}
-          POST_DATA: ${{ secrets.SITE3_DATA }}
-          INITIAL_COOKIES: ${{ secrets.SITE3_COOKIES }}
         run: |
-          node keep-alive.js
+          echo "Executing custom cURL command for ${SITE_NAME}"
+          echo "Command: ${CUSTOM_CURL}"
           
-      - name: Execute Keep Alive Request for Site 4
-        if: matrix.site.name == 'site4'
+          # 设置cookie文件和响应文件
+          COOKIE_FILE="${SITE_NAME}-cookies.txt"
+          RESPONSE_FILE="${SITE_NAME}-last-response.json"
+          
+          # 执行cURL命令，添加cookie处理选项
+          eval "${CUSTOM_CURL}" -c "${COOKIE_FILE}" > "${RESPONSE_FILE}"
+          
+          echo "${SITE_NAME}: Request completed successfully"
+          
+      - name: Execute Custom cURL for Site 4
+        if: matrix.site.name == 'site4' && secrets.SITE4_CURL != ''
         env:
+          CUSTOM_CURL: ${{ secrets.SITE4_CURL }}
           SITE_NAME: site4
-          API_ENDPOINT: ${{ secrets.SITE4_ENDPOINT }}
-          REQUEST_METHOD: ${{ secrets.SITE4_METHOD || 'GET' }}
-          CUSTOM_HEADERS: ${{ secrets.SITE4_HEADERS }}
-          POST_DATA: ${{ secrets.SITE4_DATA }}
-          INITIAL_COOKIES: ${{ secrets.SITE4_COOKIES }}
         run: |
-          node keep-alive.js
+          echo "Executing custom cURL command for ${SITE_NAME}"
+          echo "Command: ${CUSTOM_CURL}"
           
-      - name: Execute Keep Alive Request for Site 5
-        if: matrix.site.name == 'site5'
+          # 设置cookie文件和响应文件
+          COOKIE_FILE="${SITE_NAME}-cookies.txt"
+          RESPONSE_FILE="${SITE_NAME}-last-response.json"
+          
+          # 执行cURL命令，添加cookie处理选项
+          eval "${CUSTOM_CURL}" -c "${COOKIE_FILE}" > "${RESPONSE_FILE}"
+          
+          echo "${SITE_NAME}: Request completed successfully"
+          
+      - name: Execute Custom cURL for Site 5
+        if: matrix.site.name == 'site5' && secrets.SITE5_CURL != ''
         env:
+          CUSTOM_CURL: ${{ secrets.SITE5_CURL }}
           SITE_NAME: site5
-          API_ENDPOINT: ${{ secrets.SITE5_ENDPOINT }}
-          REQUEST_METHOD: ${{ secrets.SITE5_METHOD || 'GET' }}
-          CUSTOM_HEADERS: ${{ secrets.SITE5_HEADERS }}
-          POST_DATA: ${{ secrets.SITE5_DATA }}
-          INITIAL_COOKIES: ${{ secrets.SITE5_COOKIES }}
         run: |
-          node keep-alive.js
+          echo "Executing custom cURL command for ${SITE_NAME}"
+          echo "Command: ${CUSTOM_CURL}"
           
-      - name: Execute Keep Alive Request for Site 6
-        if: matrix.site.name == 'site6'
+          # 设置cookie文件和响应文件
+          COOKIE_FILE="${SITE_NAME}-cookies.txt"
+          RESPONSE_FILE="${SITE_NAME}-last-response.json"
+          
+          # 执行cURL命令，添加cookie处理选项
+          eval "${CUSTOM_CURL}" -c "${COOKIE_FILE}" > "${RESPONSE_FILE}"
+          
+          echo "${SITE_NAME}: Request completed successfully"
+          
+      - name: Execute Custom cURL for Site 6
+        if: matrix.site.name == 'site6' && secrets.SITE6_CURL != ''
         env:
+          CUSTOM_CURL: ${{ secrets.SITE6_CURL }}
           SITE_NAME: site6
-          API_ENDPOINT: ${{ secrets.SITE6_ENDPOINT }}
-          REQUEST_METHOD: ${{ secrets.SITE6_METHOD || 'GET' }}
-          CUSTOM_HEADERS: ${{ secrets.SITE6_HEADERS }}
-          POST_DATA: ${{ secrets.SITE6_DATA }}
-          INITIAL_COOKIES: ${{ secrets.SITE6_COOKIES }}
         run: |
-          node keep-alive.js
+          echo "Executing custom cURL command for ${SITE_NAME}"
+          echo "Command: ${CUSTOM_CURL}"
           
-      - name: Execute Keep Alive Request for Site 7
-        if: matrix.site.name == 'site7'
+          # 设置cookie文件和响应文件
+          COOKIE_FILE="${SITE_NAME}-cookies.txt"
+          RESPONSE_FILE="${SITE_NAME}-last-response.json"
+          
+          # 执行cURL命令，添加cookie处理选项
+          eval "${CUSTOM_CURL}" -c "${COOKIE_FILE}" > "${RESPONSE_FILE}"
+          
+          echo "${SITE_NAME}: Request completed successfully"
+          
+      - name: Execute Custom cURL for Site 7
+        if: matrix.site.name == 'site7' && secrets.SITE7_CURL != ''
         env:
+          CUSTOM_CURL: ${{ secrets.SITE7_CURL }}
           SITE_NAME: site7
-          API_ENDPOINT: ${{ secrets.SITE7_ENDPOINT }}
-          REQUEST_METHOD: ${{ secrets.SITE7_METHOD || 'GET' }}
-          CUSTOM_HEADERS: ${{ secrets.SITE7_HEADERS }}
-          POST_DATA: ${{ secrets.SITE7_DATA }}
-          INITIAL_COOKIES: ${{ secrets.SITE7_COOKIES }}
         run: |
-          node keep-alive.js
+          echo "Executing custom cURL command for ${SITE_NAME}"
+          echo "Command: ${CUSTOM_CURL}"
           
-      - name: Execute Keep Alive Request for Site 8
-        if: matrix.site.name == 'site8'
+          # 设置cookie文件和响应文件
+          COOKIE_FILE="${SITE_NAME}-cookies.txt"
+          RESPONSE_FILE="${SITE_NAME}-last-response.json"
+          
+          # 执行cURL命令，添加cookie处理选项
+          eval "${CUSTOM_CURL}" -c "${COOKIE_FILE}" > "${RESPONSE_FILE}"
+          
+          echo "${SITE_NAME}: Request completed successfully"
+          
+      - name: Execute Custom cURL for Site 8
+        if: matrix.site.name == 'site8' && secrets.SITE8_CURL != ''
         env:
+          CUSTOM_CURL: ${{ secrets.SITE8_CURL }}
           SITE_NAME: site8
-          API_ENDPOINT: ${{ secrets.SITE8_ENDPOINT }}
-          REQUEST_METHOD: ${{ secrets.SITE8_METHOD || 'GET' }}
-          CUSTOM_HEADERS: ${{ secrets.SITE8_HEADERS }}
-          POST_DATA: ${{ secrets.SITE8_DATA }}
-          INITIAL_COOKIES: ${{ secrets.SITE8_COOKIES }}
         run: |
-          node keep-alive.js
+          echo "Executing custom cURL command for ${SITE_NAME}"
+          echo "Command: ${CUSTOM_CURL}"
           
-      - name: Execute Keep Alive Request for Site 9
-        if: matrix.site.name == 'site9'
+          # 设置cookie文件和响应文件
+          COOKIE_FILE="${SITE_NAME}-cookies.txt"
+          RESPONSE_FILE="${SITE_NAME}-last-response.json"
+          
+          # 执行cURL命令，添加cookie处理选项
+          eval "${CUSTOM_CURL}" -c "${COOKIE_FILE}" > "${RESPONSE_FILE}"
+          
+          echo "${SITE_NAME}: Request completed successfully"
+          
+      - name: Execute Custom cURL for Site 9
+        if: matrix.site.name == 'site9' && secrets.SITE9_CURL != ''
         env:
+          CUSTOM_CURL: ${{ secrets.SITE9_CURL }}
           SITE_NAME: site9
-          API_ENDPOINT: ${{ secrets.SITE9_ENDPOINT }}
-          REQUEST_METHOD: ${{ secrets.SITE9_METHOD || 'GET' }}
-          CUSTOM_HEADERS: ${{ secrets.SITE9_HEADERS }}
-          POST_DATA: ${{ secrets.SITE9_DATA }}
-          INITIAL_COOKIES: ${{ secrets.SITE9_COOKIES }}
         run: |
-          node keep-alive.js
+          echo "Executing custom cURL command for ${SITE_NAME}"
+          echo "Command: ${CUSTOM_CURL}"
           
-      - name: Execute Keep Alive Request for Site 10
-        if: matrix.site.name == 'site10'
+          # 设置cookie文件和响应文件
+          COOKIE_FILE="${SITE_NAME}-cookies.txt"
+          RESPONSE_FILE="${SITE_NAME}-last-response.json"
+          
+          # 执行cURL命令，添加cookie处理选项
+          eval "${CUSTOM_CURL}" -c "${COOKIE_FILE}" > "${RESPONSE_FILE}"
+          
+          echo "${SITE_NAME}: Request completed successfully"
+          
+      - name: Execute Custom cURL for Site 10
+        if: matrix.site.name == 'site10' && secrets.SITE10_CURL != ''
         env:
+          CUSTOM_CURL: ${{ secrets.SITE10_CURL }}
           SITE_NAME: site10
-          API_ENDPOINT: ${{ secrets.SITE10_ENDPOINT }}
-          REQUEST_METHOD: ${{ secrets.SITE10_METHOD || 'GET' }}
-          CUSTOM_HEADERS: ${{ secrets.SITE10_HEADERS }}
-          POST_DATA: ${{ secrets.SITE10_DATA }}
-          INITIAL_COOKIES: ${{ secrets.SITE10_COOKIES }}
         run: |
-          node keep-alive.js
+          echo "Executing custom cURL command for ${SITE_NAME}"
+          echo "Command: ${CUSTOM_CURL}"
+          
+          # 设置cookie文件和响应文件
+          COOKIE_FILE="${SITE_NAME}-cookies.txt"
+          RESPONSE_FILE="${SITE_NAME}-last-response.json"
+          
+          # 执行cURL命令，添加cookie处理选项
+          eval "${CUSTOM_CURL}" -c "${COOKIE_FILE}" > "${RESPONSE_FILE}"
+          
+          echo "${SITE_NAME}: Request completed successfully"
           
       - name: Save Cookies For Next Run (${{ matrix.site.name }})
         uses: actions/upload-artifact@v4
