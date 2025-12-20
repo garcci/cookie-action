@@ -33,11 +33,17 @@ jobs:
           curl --version
           
       - name: Execute Custom cURL for Site 1
-        if: matrix.site.name == 'site1' && secrets.SITE1_CURL != ''
+        if: matrix.site.name == 'site1'
         env:
           CUSTOM_CURL: ${{ secrets.SITE1_CURL }}
           SITE_NAME: site1
         run: |
+          # 检查是否配置了SITE1_CURL
+          if [ -z "$CUSTOM_CURL" ]; then
+            echo "SITE1_CURL is not configured. Skipping..."
+            exit 0
+          fi
+          
           echo "Executing custom cURL command for ${SITE_NAME}"
           echo "Command: ${CUSTOM_CURL}"
           
@@ -51,11 +57,17 @@ jobs:
           echo "${SITE_NAME}: Request completed successfully"
           
       - name: Execute Custom cURL for Site 2
-        if: matrix.site.name == 'site2' && secrets.SITE2_CURL != ''
+        if: matrix.site.name == 'site2'
         env:
           CUSTOM_CURL: ${{ secrets.SITE2_CURL }}
           SITE_NAME: site2
         run: |
+          # 检查是否配置了SITE2_CURL
+          if [ -z "$CUSTOM_CURL" ]; then
+            echo "SITE2_CURL is not configured. Skipping..."
+            exit 0
+          fi
+          
           echo "Executing custom cURL command for ${SITE_NAME}"
           echo "Command: ${CUSTOM_CURL}"
           
@@ -69,11 +81,17 @@ jobs:
           echo "${SITE_NAME}: Request completed successfully"
           
       - name: Execute Custom cURL for Site 3
-        if: matrix.site.name == 'site3' && secrets.SITE3_CURL != ''
+        if: matrix.site.name == 'site3'
         env:
           CUSTOM_CURL: ${{ secrets.SITE3_CURL }}
           SITE_NAME: site3
         run: |
+          # 检查是否配置了SITE3_CURL
+          if [ -z "$CUSTOM_CURL" ]; then
+            echo "SITE3_CURL is not configured. Skipping..."
+            exit 0
+          fi
+          
           echo "Executing custom cURL command for ${SITE_NAME}"
           echo "Command: ${CUSTOM_CURL}"
           
@@ -87,11 +105,17 @@ jobs:
           echo "${SITE_NAME}: Request completed successfully"
           
       - name: Execute Custom cURL for Site 4
-        if: matrix.site.name == 'site4' && secrets.SITE4_CURL != ''
+        if: matrix.site.name == 'site4'
         env:
           CUSTOM_CURL: ${{ secrets.SITE4_CURL }}
           SITE_NAME: site4
         run: |
+          # 检查是否配置了SITE4_CURL
+          if [ -z "$CUSTOM_CURL" ]; then
+            echo "SITE4_CURL is not configured. Skipping..."
+            exit 0
+          fi
+          
           echo "Executing custom cURL command for ${SITE_NAME}"
           echo "Command: ${CUSTOM_CURL}"
           
@@ -105,11 +129,17 @@ jobs:
           echo "${SITE_NAME}: Request completed successfully"
           
       - name: Execute Custom cURL for Site 5
-        if: matrix.site.name == 'site5' && secrets.SITE5_CURL != ''
+        if: matrix.site.name == 'site5'
         env:
           CUSTOM_CURL: ${{ secrets.SITE5_CURL }}
           SITE_NAME: site5
         run: |
+          # 检查是否配置了SITE5_CURL
+          if [ -z "$CUSTOM_CURL" ]; then
+            echo "SITE5_CURL is not configured. Skipping..."
+            exit 0
+          fi
+          
           echo "Executing custom cURL command for ${SITE_NAME}"
           echo "Command: ${CUSTOM_CURL}"
           
@@ -123,11 +153,17 @@ jobs:
           echo "${SITE_NAME}: Request completed successfully"
           
       - name: Execute Custom cURL for Site 6
-        if: matrix.site.name == 'site6' && secrets.SITE6_CURL != ''
+        if: matrix.site.name == 'site6'
         env:
           CUSTOM_CURL: ${{ secrets.SITE6_CURL }}
           SITE_NAME: site6
         run: |
+          # 检查是否配置了SITE6_CURL
+          if [ -z "$CUSTOM_CURL" ]; then
+            echo "SITE6_CURL is not configured. Skipping..."
+            exit 0
+          fi
+          
           echo "Executing custom cURL command for ${SITE_NAME}"
           echo "Command: ${CUSTOM_CURL}"
           
@@ -141,11 +177,17 @@ jobs:
           echo "${SITE_NAME}: Request completed successfully"
           
       - name: Execute Custom cURL for Site 7
-        if: matrix.site.name == 'site7' && secrets.SITE7_CURL != ''
+        if: matrix.site.name == 'site7'
         env:
           CUSTOM_CURL: ${{ secrets.SITE7_CURL }}
           SITE_NAME: site7
         run: |
+          # 检查是否配置了SITE7_CURL
+          if [ -z "$CUSTOM_CURL" ]; then
+            echo "SITE7_CURL is not configured. Skipping..."
+            exit 0
+          fi
+          
           echo "Executing custom cURL command for ${SITE_NAME}"
           echo "Command: ${CUSTOM_CURL}"
           
@@ -159,11 +201,17 @@ jobs:
           echo "${SITE_NAME}: Request completed successfully"
           
       - name: Execute Custom cURL for Site 8
-        if: matrix.site.name == 'site8' && secrets.SITE8_CURL != ''
+        if: matrix.site.name == 'site8'
         env:
           CUSTOM_CURL: ${{ secrets.SITE8_CURL }}
           SITE_NAME: site8
         run: |
+          # 检查是否配置了SITE8_CURL
+          if [ -z "$CUSTOM_CURL" ]; then
+            echo "SITE8_CURL is not configured. Skipping..."
+            exit 0
+          fi
+          
           echo "Executing custom cURL command for ${SITE_NAME}"
           echo "Command: ${CUSTOM_CURL}"
           
@@ -177,11 +225,17 @@ jobs:
           echo "${SITE_NAME}: Request completed successfully"
           
       - name: Execute Custom cURL for Site 9
-        if: matrix.site.name == 'site9' && secrets.SITE9_CURL != ''
+        if: matrix.site.name == 'site9'
         env:
           CUSTOM_CURL: ${{ secrets.SITE9_CURL }}
           SITE_NAME: site9
         run: |
+          # 检查是否配置了SITE9_CURL
+          if [ -z "$CUSTOM_CURL" ]; then
+            echo "SITE9_CURL is not configured. Skipping..."
+            exit 0
+          fi
+          
           echo "Executing custom cURL command for ${SITE_NAME}"
           echo "Command: ${CUSTOM_CURL}"
           
@@ -195,11 +249,17 @@ jobs:
           echo "${SITE_NAME}: Request completed successfully"
           
       - name: Execute Custom cURL for Site 10
-        if: matrix.site.name == 'site10' && secrets.SITE10_CURL != ''
+        if: matrix.site.name == 'site10'
         env:
           CUSTOM_CURL: ${{ secrets.SITE10_CURL }}
           SITE_NAME: site10
         run: |
+          # 检查是否配置了SITE10_CURL
+          if [ -z "$CUSTOM_CURL" ]; then
+            echo "SITE10_CURL is not configured. Skipping..."
+            exit 0
+          fi
+          
           echo "Executing custom cURL command for ${SITE_NAME}"
           echo "Command: ${CUSTOM_CURL}"
           
